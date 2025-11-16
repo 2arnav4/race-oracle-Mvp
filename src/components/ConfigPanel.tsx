@@ -33,9 +33,52 @@ const ConfigSection = ({ title, icon, isOpen, onToggle, children }: ConfigSectio
   </div>
 );
 
-export const ConfigPanel = () => {
+type Scenario = {
+  scenario_id: number;
+  num_drivers: number;
+  num_laps: number;
+  aggression_factor: number;
+  drivers: string[];
+};
+
+type RaceState = {
+  time: number;
+  vehicles: any[];
+  scenario_id: number;
+  is_playing: boolean;
+  max_time: number;
+  playback_speed: number;
+};
+
+interface ConfigPanelProps {
+  scenarios: Scenario[];
+  selectedScenario: number;
+  onSelectScenario: (id: number) => void;
+  raceState: RaceState | null;
+  onSeek: (time: number) => void;
+  isPlaying: boolean;
+  onPlayPause: () => void;
+
+  config: any;
+  onConfigChange: (key: string, value: any) => void;
+}
+
+export const ConfigPanel = ({
+  scenarios,
+  selectedScenario,
+  onSelectScenario,
+  raceState,
+  onSeek,
+  isPlaying,
+  onPlayPause,
+  config,
+  onConfigChange
+}: ConfigPanelProps) => {
+
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    circuit: true,
+    scenarios: true,
+    raceInfo: true,
+    circuit: false,
     weather: false,
     tires: false,
     fuel: false,
@@ -61,13 +104,78 @@ export const ConfigPanel = () => {
           variant="outline" 
           size="sm"
           className="text-xs"
+          onClick={onPlayPause}
         >
-          RESET ALL
+          {isPlaying ? '⏸ PAUSE' : '▶ PLAY'}
         </Button>
       </div>
 
       {/* Scrollable config sections */}
       <div className="flex-1 overflow-y-auto scrollbar-thin">
+        {/* Race Scenarios Section */}
+        <ConfigSection
+          title="RACE SCENARIOS"
+          icon={<Flag className="h-4 w-4" />}
+          isOpen={true}
+          onToggle={() => {}}
+        >
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {scenarios.map((scenario) => (
+              <button
+                key={scenario.scenario_id}
+                onClick={() => onSelectScenario(scenario.scenario_id)}
+                className={`w-full text-left p-2 rounded-lg transition-colors text-xs ${
+                  selectedScenario === scenario.scenario_id
+                    ? 'bg-primary/30 border border-primary text-primary'
+                    : 'bg-black/30 border border-gray-700 text-gray-300 hover:bg-black/50'
+                }`}
+              >
+                <div className="font-semibold">Scenario {scenario.scenario_id + 1}</div>
+                <div className="text-xs text-gray-400 mt-0.5">
+                  {scenario.num_drivers} drivers • {scenario.num_laps} laps
+                </div>
+                <div className="text-xs text-gray-500">
+                  Aggression: {(scenario.aggression_factor * 100).toFixed(0)}%
+                </div>
+              </button>
+            ))}
+          </div>
+        </ConfigSection>
+
+        {/* Race Info Section */}
+        {raceState && (
+          <ConfigSection
+            title="RACE INFO"
+            icon={<Activity className="h-4 w-4" />}
+            isOpen={true}
+            onToggle={() => {}}
+          >
+            <div className="space-y-3">
+              <div className="glass-panel rounded p-2 space-y-1">
+                <div className="text-xs text-muted-foreground">Time</div>
+                <div className="text-sm font-bold text-primary">
+                  {raceState.time.toFixed(1)}s / {raceState.max_time.toFixed(1)}s
+                </div>
+              </div>
+              <div className="glass-panel rounded p-2 space-y-1">
+                <div className="text-xs text-muted-foreground">Playback Speed</div>
+                <div className="text-sm font-bold text-primary">
+                  {(raceState.playback_speed * 100).toFixed(0)}%
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Timeline</Label>
+                <Slider 
+                  value={[raceState.time]} 
+                  onValueChange={(v) => onSeek(v[0])}
+                  min={0} 
+                  max={raceState.max_time} 
+                  step={0.1} 
+                />
+              </div>
+            </div>
+          </ConfigSection>
+        )}
         {/* Circuit Selection */}
         <ConfigSection
           title="CIRCUIT"
@@ -77,7 +185,7 @@ export const ConfigPanel = () => {
         >
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">Select Circuit</Label>
-            <Select defaultValue="silverstone">
+            <Select value={config.circuit} onValueChange={(v) => onConfigChange("circuit", v)}>
               <SelectTrigger className="glass-panel">
                 <SelectValue />
               </SelectTrigger>
@@ -87,9 +195,18 @@ export const ConfigPanel = () => {
                 <SelectItem value="spa">Spa-Francorchamps</SelectItem>
                 <SelectItem value="monza">Monza</SelectItem>
                 <SelectItem value="suzuka">Suzuka</SelectItem>
-                <SelectItem value="custom">Build Custom</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Number of Drivers: {config.numDrivers}</Label>
+            <Slider 
+              value={[config.numDrivers]} 
+              onValueChange={(v) => onConfigChange("numDrivers", v[0])}
+              min={2} 
+              max={5} 
+              step={1} 
+            />
           </div>
         </ConfigSection>
 
@@ -103,29 +220,26 @@ export const ConfigPanel = () => {
           <div className="space-y-3">
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Condition</Label>
-              <Select defaultValue="sunny">
+              <Select value={config.weather} onValueChange={(v) => onConfigChange("weather", v)}>
                 <SelectTrigger className="glass-panel">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sunny">☀️ Sunny</SelectItem>
-                  <SelectItem value="cloudy">☁️ Cloudy</SelectItem>
-                  <SelectItem value="rain">🌧️ Rain</SelectItem>
-                  <SelectItem value="storm">⛈️ Storm</SelectItem>
+                  <SelectItem value="Dry">☀️ Dry</SelectItem>
+                  <SelectItem value="Wet">🌧️ Wet</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Track Temperature: 32°C</Label>
-              <Slider defaultValue={[32]} min={10} max={60} step={1} />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Humidity: 45%</Label>
-              <Slider defaultValue={[45]} min={0} max={100} step={5} />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Wind Speed: 12 km/h</Label>
-              <Slider defaultValue={[12]} min={0} max={50} step={2} />
+              <Label className="text-xs text-muted-foreground">Chaos Level: {Math.round(config.chaosLevel * 100)}%</Label>
+              <Slider 
+                value={[config.chaosLevel * 100]} 
+                onValueChange={(v) => onConfigChange("chaosLevel", v[0] / 100)}
+                min={0} 
+                max={100} 
+                step={5} 
+              />
+              <p className="text-xs text-muted-foreground/70">Higher = more random events (failures, spins)</p>
             </div>
           </div>
         </ConfigSection>
@@ -140,33 +254,16 @@ export const ConfigPanel = () => {
           <div className="space-y-3">
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Compound</Label>
-              <Select defaultValue="medium">
+              <Select value={config.tireCompound} onValueChange={(v) => onConfigChange("tireCompound", v)}>
                 <SelectTrigger className="glass-panel">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="soft">🔴 Soft</SelectItem>
-                  <SelectItem value="medium">🟡 Medium</SelectItem>
-                  <SelectItem value="hard">⚪ Hard</SelectItem>
-                  <SelectItem value="inter">🟢 Intermediate</SelectItem>
-                  <SelectItem value="wet">🔵 Wet</SelectItem>
+                  <SelectItem value="Soft">🔴 Soft (High grip, fast wear)</SelectItem>
+                  <SelectItem value="Medium">🟡 Medium (Balanced)</SelectItem>
+                  <SelectItem value="Hard">⚪ Hard (Low grip, slow wear)</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Tire Age: 8 laps</Label>
-              <Slider defaultValue={[8]} min={0} max={40} step={1} />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Degradation Rate: 1.2x</Label>
-              <Slider defaultValue={[12]} min={5} max={30} step={1} />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Pit Window: Lap 18-22</Label>
-              <div className="flex gap-2">
-                <Slider defaultValue={[18]} min={1} max={52} step={1} className="flex-1" />
-                <Slider defaultValue={[22]} min={1} max={52} step={1} className="flex-1" />
-              </div>
             </div>
           </div>
         </ConfigSection>
@@ -374,15 +471,7 @@ export const ConfigPanel = () => {
         </ConfigSection>
       </div>
 
-      {/* Footer Actions */}
-      <div className="h-16 px-4 border-t border-border/50 flex items-center gap-2 flex-shrink-0">
-        <Button variant="outline" size="sm" className="flex-1">
-          REPLAY
-        </Button>
-        <Button className="flex-1 bg-primary hover:bg-primary/80 text-primary-foreground">
-          APPLY
-        </Button>
-      </div>
+
     </aside>
   );
 };
