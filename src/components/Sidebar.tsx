@@ -8,14 +8,21 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", active: true },
-  { icon: Users, label: "Drivers", active: false },
-  { icon: BarChart3, label: "Analytics", active: false },
-  { icon: Settings, label: "Settings", active: false },
+export type ViewType = "dashboard" | "drivers" | "analytics" | "settings";
+
+const menuItems: { icon: typeof LayoutDashboard; label: string; view: ViewType }[] = [
+  { icon: LayoutDashboard, label: "Dashboard", view: "dashboard" },
+  { icon: Users, label: "Drivers", view: "drivers" },
+  { icon: BarChart3, label: "Analytics", view: "analytics" },
+  { icon: Settings, label: "Settings", view: "settings" },
 ];
 
-export const Sidebar = () => {
+interface SidebarProps {
+  activeView: ViewType;
+  onViewChange: (view: ViewType) => void;
+}
+
+export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -50,14 +57,18 @@ export const Sidebar = () => {
         <TooltipProvider>
           {menuItems.map((item) => {
             const Icon = item.icon;
+            const isActive = activeView === item.view;
             const content = (
               <Button
-                variant={item.active ? "default" : "ghost"}
+                variant={isActive ? "default" : "ghost"}
+                onClick={() => onViewChange(item.view)}
                 className={`w-full justify-start transition-all duration-200 ${
-                  item.active
+                  isActive
                     ? "bg-primary/20 text-primary hover:bg-primary/30 glow-primary"
                     : "hover:bg-secondary hover:text-primary"
                 } ${collapsed ? "justify-center px-0" : ""}`}
+                aria-label={item.label}
+                aria-current={isActive ? "page" : undefined}
               >
                 <Icon className={`h-5 w-5 ${!collapsed && "mr-3"}`} />
                 {!collapsed && (
