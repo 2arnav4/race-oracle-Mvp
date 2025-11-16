@@ -9,7 +9,14 @@ from typing import Dict, List
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from race_data import RACE_SCENARIOS, get_race_snapshot, DRIVER_PROFILES
+try:
+    # Try to use real track data first
+    from race_data_real import RACE_SCENARIOS, get_race_snapshot, DRIVER_PROFILES
+    print("✓ Using REAL F1 track data from FastF1")
+except:
+    # Fallback to Monte Carlo only
+    from race_data import RACE_SCENARIOS, get_race_snapshot, DRIVER_PROFILES
+    print("⚠ Using Monte Carlo simulations (install fastf1 for real track data)")
 
 app = FastAPI(title="Race Oracle API")
 

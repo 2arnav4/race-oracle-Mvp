@@ -4,3 +4,5 @@ websockets==13.1
 numpy==2.0.0
 pydantic==2.10.0
 python-multipart==0.0.12
+fastf1==3.4.0
+pandas==2.2.0
