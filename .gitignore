@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# FastF1 cache
+backend/src/cache/
+backend/src/cache/*
+*.ff1pkl
+fastf1_http_cache.sqlite
