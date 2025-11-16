@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { TrackVisualization } from "@/components/TrackVisualization";
-import { TelemetryPanel } from "@/components/TelemetryPanel";
+import { ConfigPanel } from "@/components/ConfigPanel";
 import { SimulationConfigModal } from "@/components/SimulationConfigModal";
 
 const Index = () => {
@@ -22,7 +22,7 @@ const Index = () => {
       <main className="flex-1 overflow-hidden">
         <TrackVisualization />
       </main>
-      <TelemetryPanel />
+      <ConfigPanel />
 
       {showModal && (
         <SimulationConfigModal
