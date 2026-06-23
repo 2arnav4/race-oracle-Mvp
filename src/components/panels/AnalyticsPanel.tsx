@@ -1,77 +1,96 @@
-import { BarChart3, LineChart, PieChart, TrendingUp } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Gauge, Timer, TrendingDown, Trophy } from "lucide-react";
+import type { RaceState } from "@/lib/raceSimulation";
 
-export const AnalyticsPanel = () => {
+interface AnalyticsPanelProps {
+  raceState: RaceState;
+}
+
+export const AnalyticsPanel = ({ raceState }: AnalyticsPanelProps) => {
+  const chartData = raceState.vehicles.map((vehicle, index) => ({
+    position: `P${index + 1}`,
+    driver: vehicle.short_name,
+    speed: Math.round(vehicle.speed_kph),
+    tireWear: Number(vehicle.tire_wear.toFixed(1)),
+    lapTime: vehicle.estimated_lap_time,
+  }));
+
+  const leader = raceState.vehicles[0];
+  const fastest = raceState.vehicles.reduce(
+    (best, vehicle) => (vehicle.estimated_lap_time < best.estimated_lap_time ? vehicle : best),
+    raceState.vehicles[0],
+  );
+  const averageSpeed =
+    raceState.vehicles.reduce((sum, vehicle) => sum + vehicle.speed_kph, 0) / Math.max(raceState.vehicles.length, 1);
+  const averageWear =
+    raceState.vehicles.reduce((sum, vehicle) => sum + vehicle.tire_wear, 0) / Math.max(raceState.vehicles.length, 1);
+
   return (
     <div className="h-full w-full p-8 space-y-6 overflow-y-auto">
-      {/* Header */}
       <div className="space-y-2">
         <h1 className="text-4xl font-bold text-primary text-glow">Analytics</h1>
-        <p className="text-muted-foreground">Performance metrics and data insights</p>
+        <p className="text-muted-foreground">Live browser-side telemetry from the selected scenario</p>
       </div>
 
-      {/* Analytics Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="glass-panel rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-primary">Lap Time Analysis</h3>
-            <LineChart className="h-5 w-5 text-primary" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="glass-panel rounded-lg p-5 space-y-2">
+          <div className="flex items-center justify-between text-muted-foreground text-sm">
+            <span>Leader</span>
+            <Trophy className="h-5 w-5 text-primary" />
           </div>
-          <div className="h-64 flex items-center justify-center text-muted-foreground border border-border/30 rounded">
-            Lap time trend chart will be displayed here
-          </div>
+          <div className="text-2xl font-bold text-primary truncate">{leader?.short_name ?? "-"}</div>
         </div>
 
-        <div className="glass-panel rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-primary">Sector Performance</h3>
-            <BarChart3 className="h-5 w-5 text-primary" />
+        <div className="glass-panel rounded-lg p-5 space-y-2">
+          <div className="flex items-center justify-between text-muted-foreground text-sm">
+            <span>Avg Speed</span>
+            <Gauge className="h-5 w-5 text-primary" />
           </div>
-          <div className="h-64 flex items-center justify-center text-muted-foreground border border-border/30 rounded">
-            Sector comparison bar chart will be displayed here
-          </div>
+          <div className="text-2xl font-bold text-primary">{Math.round(averageSpeed)} km/h</div>
         </div>
 
-        <div className="glass-panel rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-primary">Tire Wear Distribution</h3>
-            <PieChart className="h-5 w-5 text-primary" />
+        <div className="glass-panel rounded-lg p-5 space-y-2">
+          <div className="flex items-center justify-between text-muted-foreground text-sm">
+            <span>Fastest Estimate</span>
+            <Timer className="h-5 w-5 text-primary" />
           </div>
-          <div className="h-64 flex items-center justify-center text-muted-foreground border border-border/30 rounded">
-            Tire wear pie chart will be displayed here
-          </div>
+          <div className="text-2xl font-bold text-primary">{fastest?.estimated_lap_time.toFixed(3) ?? "-"}s</div>
         </div>
 
-        <div className="glass-panel rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-primary">Speed Traces</h3>
-            <TrendingUp className="h-5 w-5 text-primary" />
+        <div className="glass-panel rounded-lg p-5 space-y-2">
+          <div className="flex items-center justify-between text-muted-foreground text-sm">
+            <span>Avg Tire Wear</span>
+            <TrendingDown className="h-5 w-5 text-primary" />
           </div>
-          <div className="h-64 flex items-center justify-center text-muted-foreground border border-border/30 rounded">
-            Speed trace overlay will be displayed here
-          </div>
+          <div className="text-2xl font-bold text-primary">{averageWear.toFixed(1)}%</div>
         </div>
       </div>
 
-      {/* Summary Stats */}
-      <div className="glass-panel rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-primary mb-4">Session Summary</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">1:26.382</div>
-            <div className="text-xs text-muted-foreground">Fastest Lap</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">287.3</div>
-            <div className="text-xs text-muted-foreground">Avg Speed (km/h)</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">95.2%</div>
-            <div className="text-xs text-muted-foreground">Consistency</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">42</div>
-            <div className="text-xs text-muted-foreground">Overtakes</div>
-          </div>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="glass-panel rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-primary mb-4">Current Speed</h3>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+              <XAxis dataKey="driver" tick={{ fill: "#9ca3af", fontSize: 12 }} />
+              <YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} />
+              <Tooltip />
+              <Bar dataKey="speed" fill="#00ffd1" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="glass-panel rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-primary mb-4">Tire Wear</h3>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+              <XAxis dataKey="driver" tick={{ fill: "#9ca3af", fontSize: 12 }} />
+              <YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} />
+              <Tooltip />
+              <Bar dataKey="tireWear" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>

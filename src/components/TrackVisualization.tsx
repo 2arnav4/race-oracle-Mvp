@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { RaceState } from "@/lib/raceSimulation";
 
 type TrackPoint = { x: number; y: number; z: number; distance: number };
 type TrackData = {
@@ -7,30 +8,8 @@ type TrackData = {
   points: TrackPoint[];
 };
 
-interface Vehicle {
-  name: string;
-  driver_id: string;
-  color: string;
-  speed_kph: number;
-  lap: number;
-  track_position: number;
-  tire_wear: number;
-  tire_temp: number;
-  distance: number;
-  aggression: number;
-}
-
-interface RaceState {
-  time: number;
-  vehicles: Vehicle[];
-  scenario_id: number;
-  is_playing: boolean;
-  max_time: number;
-  playback_speed: number;
-}
-
 interface TrackVisualizationProps {
-  raceState: RaceState | null;
+  raceState: RaceState;
 }
 
 export const TrackVisualization = ({ raceState }: TrackVisualizationProps) => {
@@ -39,14 +18,14 @@ export const TrackVisualization = ({ raceState }: TrackVisualizationProps) => {
 
   // Load Track JSON
   useEffect(() => {
-    fetch("/tracks/monza_track.json")
+    fetch(`/tracks/${raceState.track_file}`)
       .then((response) => {
         if (!response.ok) throw new Error("Track JSON not found!");
         return response.json();
       })
       .then((data) => setTrack(data))
       .catch((err) => setError(err.message));
-  }, []);
+  }, [raceState.track_file]);
 
   const normalizeCoordinates = () => {
     if (!track) return { minX: 0, maxX: 1, minY: 0, maxY: 1 };
@@ -83,18 +62,18 @@ export const TrackVisualization = ({ raceState }: TrackVisualizationProps) => {
   };
 
   const vehicles = raceState?.vehicles || [];
-  const trackLength = track?.total_length || 5800;
 
   // Convert track position to screen coordinates
   const getVehicleScreenPosition = (trackPosition: number) => {
     if (!track || track.points.length === 0) return { x: 0, y: 0 };
+    const normalizedPosition = ((trackPosition % track.total_length) + track.total_length) % track.total_length;
     
     // Find the point on track closest to this position
     let closestPoint = track.points[0];
-    let minDiff = Math.abs(track.points[0].distance - trackPosition);
+    let minDiff = Math.abs(track.points[0].distance - normalizedPosition);
     
     for (const point of track.points) {
-      const diff = Math.abs(point.distance - trackPosition);
+      const diff = Math.abs(point.distance - normalizedPosition);
       if (diff < minDiff) {
         minDiff = diff;
         closestPoint = point;
@@ -121,23 +100,6 @@ export const TrackVisualization = ({ raceState }: TrackVisualizationProps) => {
 
       {track && (
         <div className="relative w-full h-full flex items-center justify-center">
-          {/* No Race Message */}
-          {!raceState && (
-            <div className="absolute inset-0 flex items-center justify-center z-20 bg-black/40 backdrop-blur-sm">
-              <div className="text-center bg-black/80 rounded-2xl p-8 border border-primary/30 max-w-md">
-                <div className="text-6xl mb-4">🏎️</div>
-                <h3 className="text-2xl font-bold text-primary mb-2">Ready to Race</h3>
-                <p className="text-gray-400 mb-6">
-                  Select a scenario from the right panel and click "Play" to begin
-                </p>
-                <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                  <span>Waiting for race start...</span>
-                </div>
-              </div>
-            </div>
-          )}
-          
           {/* Info Panel */}
           <div className="absolute top-20 left-8 z-10 bg-black/70 backdrop-blur-md rounded-xl p-4 border border-primary/20 shadow-2xl max-w-xs">
             <div className="flex items-center gap-2 mb-3">

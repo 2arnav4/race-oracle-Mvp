@@ -19,22 +19,7 @@ node_modules/
 .env.test.local
 .env.production.local
 
-# Python virtual environments and caches
-.venv/
-venv/
-env/
-ENV/
-__pycache__/
-*.py[cod]
-*$py.class
-.pytest_cache/
-.mypy_cache/
 
-# FastF1 / Telemetry cache
-backend/src/cache/
-backend/src/cache/*
-*.ff1pkl
-fastf1_http_cache.sqlite
 
 # System and Editor directories
 .DS_Store
