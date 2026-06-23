@@ -7,23 +7,48 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Node / Frontend
+node_modules/
+/dist
+/dist-ssr
+/build
 *.local
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Python virtual environments and caches
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+
+# FastF1 / Telemetry cache
+backend/src/cache/
+backend/src/cache/*
+*.ff1pkl
+fastf1_http_cache.sqlite
+
+# System and Editor directories
 .DS_Store
+**/.DS_Store
+Thumbs.db
+.vscode/
+!.vscode/extensions.json
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-# FastF1 cache
-backend/src/cache/
-backend/src/cache/*
-*.ff1pkl
-fastf1_http_cache.sqlite
+.project
+.pydevproject
+.settings/
+
