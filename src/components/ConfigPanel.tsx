@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Activity, ChevronDown, ChevronUp, CircleDot, Cloud, Flag, Gauge, MapPin } from "lucide-react";
+import { Activity, ChevronDown, ChevronUp, CircleDot, Cloud, Flag, Gauge, MapPin, Download, FastForward } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -42,9 +42,10 @@ interface ConfigPanelProps {
   onConfigChange: <K extends keyof RaceConfig>(key: K, value: RaceConfig[K]) => void;
   playbackSpeed: number;
   onPlaybackSpeedChange: (speed: number) => void;
+  onExport: (format: "json" | "csv") => void;
 }
 
-const playbackOptions = [0.5, 1, 2];
+const playbackOptions = [0.5, 1, 2, 5, 10, 20];
 
 export const ConfigPanel = ({
   scenarios,
@@ -58,6 +59,7 @@ export const ConfigPanel = ({
   onConfigChange,
   playbackSpeed,
   onPlaybackSpeedChange,
+  onExport,
 }: ConfigPanelProps) => {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     scenarios: true,
@@ -65,6 +67,7 @@ export const ConfigPanel = ({
     circuit: true,
     weather: true,
     tires: true,
+    export: true,
   });
 
   const toggleSection = (section: string) => {
@@ -76,10 +79,10 @@ export const ConfigPanel = ({
   const visibleDrivers = Math.min(config.numDrivers, maxDrivers);
 
   return (
-    <aside className="glass-panel h-screen w-96 border-l border-border/50 flex flex-col overflow-hidden">
+    <aside className="glass-panel h-screen w-96 border-l border-border/50 flex flex-col overflow-hidden flex-shrink-0">
       <div className="h-16 px-4 border-b border-border/50 flex items-center justify-between flex-shrink-0">
         <h2 className="text-lg font-bold text-primary text-glow">CONFIGURATOR</h2>
-        <Button variant="outline" size="sm" className="text-xs" onClick={onPlayPause}>
+        <Button variant="outline" size="sm" className="text-xs border-primary/30 hover:bg-primary/10 hover:text-primary transition-colors" onClick={onPlayPause}>
           {isPlaying ? "PAUSE" : "PLAY"}
         </Button>
       </div>
@@ -147,7 +150,7 @@ export const ConfigPanel = ({
                   type="button"
                   variant={playbackSpeed === speed ? "default" : "outline"}
                   size="sm"
-                  className="text-xs"
+                  className="text-xs px-1"
                   onClick={() => onPlaybackSpeedChange(speed)}
                 >
                   {speed}x
@@ -155,6 +158,16 @@ export const ConfigPanel = ({
               ))}
             </div>
           </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full text-xs flex items-center gap-1.5 justify-center mt-2 border-primary/20 hover:bg-primary/10 hover:text-primary transition-colors"
+            onClick={() => onSeek(raceState.max_time)}
+          >
+            <FastForward className="h-3.5 w-3.5" />
+            Skip to End (Finish Race)
+          </Button>
         </ConfigSection>
 
         <ConfigSection
@@ -247,6 +260,34 @@ export const ConfigPanel = ({
             <span>
               Fastest lap estimate {raceState.vehicles[0]?.estimated_lap_time.toFixed(3) ?? "-"}s
             </span>
+          </div>
+        </ConfigSection>
+
+        <ConfigSection
+          title="EXPORT DATA"
+          icon={<Download className="h-4 w-4" />}
+          isOpen={openSections.export}
+          onToggle={() => toggleSection("export")}
+        >
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs flex items-center gap-1.5 justify-center hover:bg-primary/20 hover:text-primary transition-colors border-primary/20"
+              onClick={() => onExport("json")}
+            >
+              <Download className="h-3.5 w-3.5" />
+              Export JSON
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs flex items-center gap-1.5 justify-center hover:bg-primary/20 hover:text-primary transition-colors border-primary/20"
+              onClick={() => onExport("csv")}
+            >
+              <Download className="h-3.5 w-3.5" />
+              Export CSV
+            </Button>
           </div>
         </ConfigSection>
       </div>
