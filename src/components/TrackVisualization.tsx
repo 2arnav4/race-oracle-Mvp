@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { RaceState } from "@/lib/raceSimulation";
+import type { RaceState, AppSettings } from "@/lib/raceSimulation";
 
 type TrackPoint = { x: number; y: number; z: number; distance: number };
 type TrackData = {
@@ -10,9 +10,10 @@ type TrackData = {
 
 interface TrackVisualizationProps {
   raceState: RaceState;
+  settings: AppSettings;
 }
 
-export const TrackVisualization = ({ raceState }: TrackVisualizationProps) => {
+export const TrackVisualization = ({ raceState, settings }: TrackVisualizationProps) => {
   const [track, setTrack] = useState<TrackData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -101,81 +102,83 @@ export const TrackVisualization = ({ raceState }: TrackVisualizationProps) => {
       {track && (
         <div className="relative w-full h-full flex items-center justify-center">
           {/* Info Panel */}
-          <div className="absolute top-20 left-8 z-10 bg-black/70 backdrop-blur-md rounded-xl p-4 border border-primary/20 shadow-2xl max-w-xs">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-              <h2 className="text-lg font-bold text-primary">
-                {track.track_name}
-              </h2>
-            </div>
-            
-            {raceState && (
-              <div className="text-xs text-gray-300 mb-3 space-y-1 pb-3 border-b border-gray-700">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Time:</span>
-                  <span className="font-mono font-medium">{raceState.time.toFixed(1)}s</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Speed:</span>
-                  <span className="font-medium">{(raceState.playback_speed * 100).toFixed(0)}%</span>
-                </div>
+          {settings.showTelemetryOverlay && (
+            <div className="absolute top-20 left-8 z-10 bg-black/70 backdrop-blur-md rounded-xl p-4 border border-primary/20 shadow-2xl max-w-xs">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                <h2 className="text-lg font-bold text-primary">
+                  {track.track_name}
+                </h2>
               </div>
-            )}
-            
-            <div className="space-y-2">
-              <div className="text-xs font-semibold text-gray-400 mb-2">LIVE POSITIONS</div>
-              {vehicles.length === 0 && (
-                <div className="text-xs text-gray-500 italic">No drivers on track</div>
-              )}
-              {vehicles.map((vehicle, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-2 text-sm bg-black/30 rounded-lg p-2 hover:bg-black/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2 flex-1">
-                    <div className="text-xs font-bold text-gray-400 w-6">P{idx + 1}</div>
-                    <div
-                      className="w-3 h-3 rounded-full shadow-lg"
-                      style={{
-                        backgroundColor: vehicle.color,
-                        boxShadow: `0 0 8px ${vehicle.color}`,
-                      }}
-                    />
-                    <span className="text-white font-medium text-xs flex-1">{vehicle.name}</span>
+              
+              {raceState && (
+                <div className="text-xs text-gray-300 mb-3 space-y-1 pb-3 border-b border-gray-700">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Time:</span>
+                    <span className="font-mono font-medium">{raceState.time.toFixed(1)}s</span>
                   </div>
-                  <div className="text-right">
-                    <div className="text-primary font-bold text-sm">
-                      {Math.round(vehicle.speed_kph)}
-                    </div>
-                    <div className="text-xs text-gray-400">km/h</div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Speed:</span>
+                    <span className="font-medium">{(raceState.playback_speed * 100).toFixed(0)}%</span>
                   </div>
                 </div>
-              ))}
-            </div>
-            
-            {vehicles.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-gray-700">
-                <div className="text-xs font-semibold text-gray-400 mb-2">TIRE WEAR</div>
-                {vehicles.slice(0, 3).map((vehicle, idx) => (
-                  <div key={idx} className="flex items-center gap-2 mb-1.5">
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: vehicle.color }}
-                    />
-                    <div className="flex-1 bg-gray-800 rounded-full h-1.5 overflow-hidden">
+              )}
+              
+              <div className="space-y-2">
+                <div className="text-xs font-semibold text-gray-400 mb-2">LIVE POSITIONS</div>
+                {vehicles.length === 0 && (
+                  <div className="text-xs text-gray-500 italic">No drivers on track</div>
+                )}
+                {vehicles.map((vehicle, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 text-sm bg-black/30 rounded-lg p-2 hover:bg-black/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 flex-1">
+                      <div className="text-xs font-bold text-gray-400 w-6">P{idx + 1}</div>
                       <div
-                        className="h-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 transition-all"
-                        style={{ width: `${vehicle.tire_wear}%` }}
+                        className="w-3 h-3 rounded-full shadow-lg"
+                        style={{
+                          backgroundColor: vehicle.color,
+                          boxShadow: `0 0 8px ${vehicle.color}`,
+                        }}
                       />
+                      <span className="text-white font-medium text-xs flex-1">{vehicle.name}</span>
                     </div>
-                    <span className="text-xs text-gray-400 w-10 text-right">
-                      {Math.round(vehicle.tire_wear)}%
-                    </span>
+                    <div className="text-right">
+                      <div className="text-primary font-bold text-sm">
+                        {Math.round(vehicle.speed_kph)}
+                      </div>
+                      <div className="text-xs text-gray-400">km/h</div>
+                    </div>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
+              
+              {vehicles.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-gray-700">
+                  <div className="text-xs font-semibold text-gray-400 mb-2">TIRE WEAR</div>
+                  {vehicles.slice(0, 3).map((vehicle, idx) => (
+                    <div key={idx} className="flex items-center gap-2 mb-1.5">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: vehicle.color }}
+                      />
+                      <div className="flex-1 bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 transition-all"
+                          style={{ width: `${vehicle.tire_wear}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-400 w-10 text-right">
+                        {Math.round(vehicle.tire_wear)}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Track SVG - Centered and larger */}
           <svg className="w-[90%] h-[90%]" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid meet">
@@ -224,11 +227,16 @@ export const TrackVisualization = ({ raceState }: TrackVisualizationProps) => {
             {vehicles.map((vehicle, idx) => {
               const screen = getVehicleScreenPosition(vehicle.track_position);
 
+              const showGlow = settings.glowEffects;
               return (
-                <g key={idx} filter="url(#glow)">
+                <g key={idx} filter={showGlow ? "url(#glow)" : undefined}>
                   {/* Vehicle outer glow */}
-                  <circle cx={screen.x} cy={screen.y} r="16" fill={vehicle.color} opacity="0.2" />
-                  <circle cx={screen.x} cy={screen.y} r="12" fill={vehicle.color} opacity="0.4" />
+                  {showGlow && (
+                    <>
+                      <circle cx={screen.x} cy={screen.y} r="16" fill={vehicle.color} opacity="0.2" />
+                      <circle cx={screen.x} cy={screen.y} r="12" fill={vehicle.color} opacity="0.4" />
+                    </>
+                  )}
                   {/* Vehicle */}
                   <circle
                     cx={screen.x}

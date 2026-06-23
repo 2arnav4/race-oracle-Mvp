@@ -20,9 +20,10 @@ const menuItems: { icon: typeof LayoutDashboard; label: string; view: ViewType }
 interface SidebarProps {
   activeView: ViewType;
   onViewChange: (view: ViewType) => void;
+  isBackendConnected?: boolean;
 }
 
-export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
+export const Sidebar = ({ activeView, onViewChange, isBackendConnected }: SidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -98,14 +99,22 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
         {!collapsed ? (
           <div className="text-xs text-muted-foreground space-y-1">
             <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-primary animate-pulse glow-primary" />
-              <span>System Online</span>
+              <div className={`h-2.5 w-2.5 rounded-full animate-pulse ${
+                isBackendConnected ? "bg-green-500 shadow-[0_0_8px_#22c55e]" : "bg-blue-500 shadow-[0_0_8px_#3b82f6]"
+              }`} />
+              <span className="font-semibold text-gray-300">
+                {isBackendConnected ? "Backend Connected" : "Sandbox Mode"}
+              </span>
             </div>
-            <div>Latency: 12ms</div>
+            <div className="text-[10px] text-gray-500">
+              Latency: {isBackendConnected ? "12ms (Remote)" : "0ms (Local)"}
+            </div>
           </div>
         ) : (
           <div className="flex justify-center">
-            <div className="h-2 w-2 rounded-full bg-primary animate-pulse glow-primary" />
+            <div className={`h-2.5 w-2.5 rounded-full animate-pulse ${
+              isBackendConnected ? "bg-green-500 shadow-[0_0_8px_#22c55e]" : "bg-blue-500 shadow-[0_0_8px_#3b82f6]"
+            }`} />
           </div>
         )}
       </div>

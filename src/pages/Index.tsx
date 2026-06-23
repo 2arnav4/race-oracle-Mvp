@@ -24,8 +24,25 @@ const Index = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [config, setConfig] = useState<RaceConfig>(DEFAULT_CONFIG);
-  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   
+  // Persistent Settings from localStorage
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    const saved = localStorage.getItem("race_oracle_settings");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (err) {
+        console.error("Failed to parse local settings:", err);
+      }
+    }
+    return DEFAULT_SETTINGS;
+  });
+
+  // Save settings to localStorage on change
+  useEffect(() => {
+    localStorage.setItem("race_oracle_settings", JSON.stringify(settings));
+  }, [settings]);
+
   // Backend connection state
   const [isBackendConnected, setIsBackendConnected] = useState(false);
   const [backendRaceState, setBackendRaceState] = useState<RaceState | null>(null);
@@ -87,7 +104,6 @@ const Index = () => {
             setPlaybackSpeed(data.speed);
           } else if (data.vehicles && Array.isArray(data.vehicles)) {
             // Receive standard telemetry snapshot
-            // Map backend naming to match frontend schema
             const mappedVehicles = data.vehicles.map((v: any, idx: number) => ({
               position: v.position ?? (idx + 1),
               name: v.name,
@@ -219,21 +235,9 @@ const Index = () => {
     };
   }, [isPlaying, playbackSpeed, raceState.max_time, isBackendConnected, currentScenario.name]);
 
-  // Sync theme changes with system preferences
-  useEffect(() => {
-    if (settings.darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [settings.darkMode]);
-
   /* ── Handlers ───────────────────────────────────────────────────── */
   const onConfigChange = <K extends keyof RaceConfig>(key: K, value: RaceConfig[K]) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
-    toast.success(`Configuration updated`, {
-      description: `${key} changed to ${value}.`,
-    });
   };
 
   const onSettingsChange = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
@@ -323,70 +327,76 @@ const Index = () => {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
-      <Sidebar activeView={activeView} onViewChange={setActiveView} />
+      <Sidebar 
+        activeView={activeView} 
+        onViewChange={setActiveView} 
+        isBackendConnected={isBackendConnected} 
+      />
 
-      <main className="flex-1 overflow-hidden relative">
-        {/* Status badges */}
-        <div className="absolute top-4 left-4 z-50 flex gap-2">
-          {isBackendConnected ? (
-            <div className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30 shadow-lg shadow-green-500/10">
-              ● FastAPI Backend
-            </div>
-          ) : (
-            <div className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30 shadow-lg shadow-blue-500/10">
-              ● Local Sandbox
-            </div>
-          )}
-          
-          {isPlaying && (
-            <div className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse shadow-lg shadow-red-500/10">
-              LIVE
-            </div>
-          )}
-          
-          {isFinished && (
-            <div className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 shadow-lg shadow-yellow-500/10">
-              FINISHED
-            </div>
-          )}
-        </div>
+      <main className="flex-1 flex flex-col overflow-hidden relative">
+        {/* Top Header Bar */}
+        <header className="h-16 px-6 border-b border-border/50 flex items-center justify-between bg-black/40 backdrop-blur-md z-40 flex-shrink-0">
+          {/* Left: Section Title */}
+          <h1 className="text-xl font-bold text-glow text-primary">
+            {activeView === "dashboard" && "Telemetry Dashboard"}
+            {activeView === "drivers" && "Driver Standings"}
+            {activeView === "analytics" && "Analytics & Performance"}
+            {activeView === "settings" && "System Settings"}
+          </h1>
 
-        {/* Play / Pause / Restart */}
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 flex gap-2">
-          {!isPlaying ? (
-            <button
-              onClick={playRace}
-              className="px-5 py-2 bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg text-sm font-semibold transition-all shadow-lg shadow-primary/20 hover:scale-105 active:scale-95"
-            >
-              {isFinished ? "🔄 Restart Race" : "▶ Play Telemetry"}
-            </button>
-          ) : (
-            <button
-              onClick={pauseRace}
-              className="px-5 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg text-sm font-semibold transition-all shadow-lg shadow-yellow-600/20 hover:scale-105 active:scale-95"
-            >
-              ⏸ Pause Telemetry
-            </button>
-          )}
-        </div>
+          {/* Center: Play / Pause / Restart */}
+          <div className="flex items-center gap-3">
+            {!isPlaying ? (
+              <button
+                onClick={playRace}
+                className="px-5 py-2 bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg text-xs font-bold transition-all shadow-lg shadow-primary/20 hover:scale-105 active:scale-95"
+              >
+                {isFinished ? "🔄 Restart Race" : "▶ Play Telemetry"}
+              </button>
+            ) : (
+              <button
+                onClick={pauseRace}
+                className="px-5 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-yellow-600/20 hover:scale-105 active:scale-95"
+              >
+                ⏸ Pause Telemetry
+              </button>
+            )}
 
-        {/* Scenario info banner */}
-        <div className="absolute top-4 right-[25rem] z-50 bg-black/70 backdrop-blur-md rounded-lg px-4 py-2.5 border border-primary/20 text-xs text-gray-300 shadow-2xl max-w-sm">
-          <div className="font-bold text-primary text-glow text-sm truncate">
-            {currentScenario.name}
+            {isPlaying && (
+              <span className="px-3 py-1 rounded-full text-[10px] font-extrabold bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse shadow-lg shadow-red-500/10">
+                LIVE
+              </span>
+            )}
+            
+            {isFinished && (
+              <span className="px-3 py-1 rounded-full text-[10px] font-extrabold bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 shadow-lg shadow-yellow-500/10">
+                FINISHED
+              </span>
+            )}
           </div>
-          <div className="text-gray-400 mt-0.5 font-medium">
-            {raceState.total_drivers} drivers · {currentScenario.num_laps} laps · {raceState.weather}
+
+          {/* Right: Active Scenario Banner */}
+          <div className="flex items-center gap-3 bg-black/30 rounded-lg px-4 py-2 border border-border/30 text-xs max-w-sm">
+            <div className="font-bold text-primary text-glow truncate max-w-[120px]">
+              {currentScenario.name}
+            </div>
+            <div className="text-gray-400 font-semibold whitespace-nowrap border-l border-gray-700 pl-3">
+              {raceState.total_drivers} drivers · {currentScenario.num_laps} laps
+            </div>
           </div>
-          <div className="mt-2 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+        </header>
+
+        {/* Dynamic Panel Viewport */}
+        <div className="flex-1 overflow-hidden relative">
+          {/* Mini scenario progress bar directly at the top boundary of content */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-gray-950 z-40">
             <div
               className="h-full bg-gradient-to-r from-primary to-cyan-400 transition-all duration-300"
               style={{ width: `${raceState.race_progress}%` }}
             />
           </div>
+          {renderMainContent()}
         </div>
-
-        {renderMainContent()}
       </main>
 
       <ConfigPanel

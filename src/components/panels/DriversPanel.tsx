@@ -7,12 +7,7 @@ interface DriversPanelProps {
 
 export const DriversPanel = ({ raceState }: DriversPanelProps) => {
   return (
-    <div className="h-full w-full p-8 space-y-6 overflow-y-auto">
-      <div className="space-y-2">
-        <h1 className="text-4xl font-bold text-primary text-glow">Drivers</h1>
-        <p className="text-muted-foreground">Live field order and driver traits</p>
-      </div>
-
+    <div className="h-full w-full p-8 space-y-6 overflow-y-auto bg-gradient-to-br from-[#0a0f1e] via-[#0d1321] to-[#0a0f1e]">
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
         {raceState.vehicles.map((driver, index) => (
           <div

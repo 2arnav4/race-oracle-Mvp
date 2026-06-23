@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { Settings as SettingsIcon, Monitor, Bell, Shield, Database, Sparkles, Volume2, HelpCircle } from "lucide-react";
+import { Settings as SettingsIcon, Monitor, Sparkles, Database, HelpCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -12,64 +11,42 @@ interface SettingsPanelProps {
 }
 
 export const SettingsPanel = ({ settings, onSettingsChange }: SettingsPanelProps) => {
-  // Sync dark mode class on document element
-  useEffect(() => {
-    if (settings.darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [settings.darkMode]);
-
-  const handleToggle = <K extends keyof AppSettings>(key: K, label: string) => {
+  
+  const handleToggle = <K extends keyof AppSettings>(key: K) => {
     const nextVal = !settings[key];
     onSettingsChange(key, nextVal as AppSettings[K]);
-    
-    if (nextVal) {
-      toast.success(`${label} enabled`, {
-        description: `Successfully activated ${label.toLowerCase()} in preferences.`,
-      });
-    } else {
-      toast.info(`${label} disabled`, {
-        description: `Successfully deactivated ${label.toLowerCase()} in preferences.`,
-      });
-    }
   };
 
   const handleResetSettings = () => {
+    // Reset all settings in localStorage
+    localStorage.removeItem("race_oracle_settings");
+    
+    // Trigger reset in parent state
     onSettingsChange("glowEffects", true);
     onSettingsChange("showTelemetryOverlay", true);
     onSettingsChange("autoPlayOnSelect", true);
-    onSettingsChange("darkMode", true);
     onSettingsChange("reduceMotion", false);
     onSettingsChange("soundEffects", true);
-    toast.success("Settings reset to defaults", {
-      description: "All configurations have been restored to their initial F1 MVP values.",
+    
+    toast.success("Settings Reset Successful", {
+      description: "All parameters restored to premium defaults.",
     });
   };
 
   const handleClearCache = () => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 800)),
-      {
-        loading: "Clearing circuit and driver data cache...",
-        success: "Cache cleared successfully",
-        error: "Failed to clear cache",
-      }
-    );
+    // Perform active cache clearing
+    localStorage.clear();
+    toast.success("Active Cache Cleared", {
+      description: "Database cache and local preferences reset. Reloading dashboard...",
+    });
+    // Silent reload after a brief delay
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   };
 
   return (
     <div className="h-full w-full p-8 space-y-6 overflow-y-auto bg-gradient-to-br from-[#0a0f1e] via-[#0d1321] to-[#0a0f1e]">
-      {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-4xl font-bold text-primary text-glow flex items-center gap-3">
-          <SettingsIcon className="h-8 w-8 text-primary animate-spin-slow" />
-          Settings
-        </h1>
-        <p className="text-muted-foreground">Configure your Race Oracle live telemetry dashboard and simulation engine</p>
-      </div>
-
       {/* Settings Sections */}
       <div className="space-y-6 max-w-3xl">
         {/* Display Settings */}
@@ -82,25 +59,13 @@ export const SettingsPanel = ({ settings, onSettingsChange }: SettingsPanelProps
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label className="text-sm cursor-pointer" htmlFor="dark-mode">Dark Mode</Label>
-                <p className="text-xs text-muted-foreground">Use premium dark theme across the application</p>
-              </div>
-              <Switch 
-                id="dark-mode" 
-                checked={settings.darkMode} 
-                onCheckedChange={() => handleToggle("darkMode", "Dark Mode")}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
                 <Label className="text-sm cursor-pointer" htmlFor="glow-effects">Glow Effects</Label>
                 <p className="text-xs text-muted-foreground">Enable neon glow animations for F1 cars on track</p>
               </div>
               <Switch 
                 id="glow-effects" 
                 checked={settings.glowEffects} 
-                onCheckedChange={() => handleToggle("glowEffects", "Glow Effects")}
+                onCheckedChange={() => handleToggle("glowEffects")}
               />
             </div>
 
@@ -112,7 +77,7 @@ export const SettingsPanel = ({ settings, onSettingsChange }: SettingsPanelProps
               <Switch 
                 id="telemetry-overlay" 
                 checked={settings.showTelemetryOverlay} 
-                onCheckedChange={() => handleToggle("showTelemetryOverlay", "Telemetry Overlay")}
+                onCheckedChange={() => handleToggle("showTelemetryOverlay")}
               />
             </div>
 
@@ -124,7 +89,7 @@ export const SettingsPanel = ({ settings, onSettingsChange }: SettingsPanelProps
               <Switch 
                 id="reduce-motion" 
                 checked={settings.reduceMotion} 
-                onCheckedChange={() => handleToggle("reduceMotion", "Reduce Motion")}
+                onCheckedChange={() => handleToggle("reduceMotion")}
               />
             </div>
           </div>
@@ -146,7 +111,7 @@ export const SettingsPanel = ({ settings, onSettingsChange }: SettingsPanelProps
               <Switch 
                 id="auto-play" 
                 checked={settings.autoPlayOnSelect} 
-                onCheckedChange={() => handleToggle("autoPlayOnSelect", "Auto-play")}
+                onCheckedChange={() => handleToggle("autoPlayOnSelect")}
               />
             </div>
 
@@ -158,7 +123,7 @@ export const SettingsPanel = ({ settings, onSettingsChange }: SettingsPanelProps
               <Switch 
                 id="sound-effects" 
                 checked={settings.soundEffects} 
-                onCheckedChange={() => handleToggle("soundEffects", "Sound Effects")}
+                onCheckedChange={() => handleToggle("soundEffects")}
               />
             </div>
           </div>
@@ -199,12 +164,12 @@ export const SettingsPanel = ({ settings, onSettingsChange }: SettingsPanelProps
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Button variant="outline" className="justify-center text-xs" onClick={handleClearCache}>
+            <Button variant="outline" className="justify-center text-xs border-primary/20 hover:bg-primary/10 transition-colors" onClick={handleClearCache}>
               Clear Simulation Cache
             </Button>
             <Button 
               variant="outline" 
-              className="justify-center text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+              className="justify-center text-xs text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30 transition-colors"
               onClick={handleResetSettings}
             >
               Reset All Settings

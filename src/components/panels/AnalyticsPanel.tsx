@@ -26,12 +26,7 @@ export const AnalyticsPanel = ({ raceState }: AnalyticsPanelProps) => {
     raceState.vehicles.reduce((sum, vehicle) => sum + vehicle.tire_wear, 0) / Math.max(raceState.vehicles.length, 1);
 
   return (
-    <div className="h-full w-full p-8 space-y-6 overflow-y-auto">
-      <div className="space-y-2">
-        <h1 className="text-4xl font-bold text-primary text-glow">Analytics</h1>
-        <p className="text-muted-foreground">Live browser-side telemetry from the selected scenario</p>
-      </div>
-
+    <div className="h-full w-full p-8 space-y-6 overflow-y-auto bg-gradient-to-br from-[#0a0f1e] via-[#0d1321] to-[#0a0f1e]">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="glass-panel rounded-lg p-5 space-y-2">
           <div className="flex items-center justify-between text-muted-foreground text-sm">
